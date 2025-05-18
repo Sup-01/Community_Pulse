@@ -107,3 +107,63 @@ def main_menu():
 
 # Start the program
 main_menu()
+
+def create_event():
+    print("\n--- Create Event ---")
+    title = input("Title: ")
+    category = input("Category (Garage Sale, Sports Match, etc.): ")
+    description = input("Description: ")
+    date = input("Date (YYYY-MM-DD): ")
+    location = input("Location: ")
+
+    cursor.execute('''
+        INSERT INTO events (title, category, description, date, location, created_by)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ''', (title, category, description, date, location, current_user[0]))
+    conn.commit()
+    print("✅ Event created! Waiting for admin approval.")
+
+def view_events():
+    print("\n--- Approved Events ---")
+    cursor.execute("SELECT * FROM events WHERE approved = 1")
+    events = cursor.fetchall()
+    if not events:
+        print("No approved events yet.")
+        return
+
+    for event in events:
+        print(f"#{event[0]}: {event[1]} ({event[2]}) on {event[4]} at {event[5]}")
+        print(f"  {event[3]}\n")
+
+def view_my_events():
+    print("\n--- My Events ---")
+    cursor.execute("SELECT * FROM events WHERE created_by = ?", (current_user[0],))
+    events = cursor.fetchall()
+    if not events:
+        print("You haven't posted any events.")
+        return
+
+    for event in events:
+        status = "✅ Approved" if event[7] else "⌛ Pending"
+        print(f"#{event[0]}: {event[1]} - {status}")
+
+def user_menu():
+    while True:
+        print("\n=== User Menu ===")
+        print("1. Create Event")
+        print("2. View Approved Events")
+        print("3. View My Events")
+        print("4. Logout")
+        choice = input("Choose an option: ")
+
+        if choice == '1':
+            create_event()
+        elif choice == '2':
+            view_events()
+        elif choice == '3':
+            view_my_events()
+        elif choice == '4':
+            print("🔒 Logged out.")
+            break
+        else:
+            print("❌ Invalid choice.")
